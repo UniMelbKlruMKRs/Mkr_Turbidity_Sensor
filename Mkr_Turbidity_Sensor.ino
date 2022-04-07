@@ -7,19 +7,26 @@
 #include <DallasTemperature.h>
 #include <SD.h>                 //to manage files on SD Card
 #include <WDTZero.h>            //Watch! The dog will bite you if you sleep too much!!! https://github.com/javos65/WDTZero
+#include <NTPClient.h>
 
 
 #define WATER_TEMP_SENSOR 1
 #define AMBIENT_TEMP_SENSOR 0
 #define SD_CHIP_SELECT    4       //Communication PIN SD Card
 #define LOG_FILE "TURBDAT.csv"
+#define GPRS_APN      "mdata.net.au" // replace your GPRS APN  --> "mdata.net.au" for ALDI
+#define GPRS_LOGIN        ""      //no login required for the carrier for ALDI
+#define GPRS_PASSWORD     ""      //no password required for the carrier for ALDI
 
 WDTZero watchDog;
 File myFile;                        //specific class to use files
 RTCZero rtc;              //Real Time clock
 GSM gsmAccess(false);            //access to the network, true if you want to have all messages from the GSM chip
+GSMUDP timeUDP;
+GPRS gprs;
+NTPClient timeClient(timeUDP,"pool.ntp.org");
 
-// Setup a oneWire instance to communicate with any OneWire device
+// Setup a oneWire instance to communicate withf any OeWire device
 OneWire oneWireWater(WATER_TEMP_SENSOR);
 DallasTemperature sensorInWater(&oneWireWater);
 
@@ -39,6 +46,7 @@ void setup(void)
 {
   Serial.begin(9600);
   watchDog.setup(WDT_HARDCYCLE16S);
+  timeClient.begin();
   gsmConnect(); //Enable once sim is registered
   isCardMounted();
   counter = readFile("counter").toInt();
@@ -56,7 +64,7 @@ void setup(void)
 
 void loop(void) {
   watchDog.clear();
-  epochTime = gsmAccess.getTime();
+  epochTime = timeClient.getEpochTime() + 36000;
   rtc.setEpoch(epochTime);
   getRtcTime();
   sensorInWater.requestTemperatures();
@@ -132,14 +140,15 @@ void gsmConnect() {
   // If your SIM has PIN, pass it as a parameter of begin() in quotes
   while (notConnected)
   {
-    if (gsmAccess.begin() == GSM_READY) {
+    if (gsmAccess.begin() == GSM_READY && gprs.attachGPRS(GPRS_APN, GPRS_LOGIN, GPRS_PASSWORD) == GPRS_READY)) {
       notConnected = false;
       Serial.println("Connected to network");
+      timeClient.update();
     }
     else
     {
       Serial.println("Not connected");
-      delay(1000);
+      delay(500);
     }
   }
 }
