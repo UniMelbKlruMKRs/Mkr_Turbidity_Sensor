@@ -55,8 +55,8 @@ void setup(void)
   sensorInAmbient.begin();
   ads.setAddr_ADS1115(ADS1115_IIC_ADDRESS0);   // 0x48
   ads.setGain(eGAIN_TWOTHIRDS);   // 2/3x gain
-  ads.setMode(eMODE_SINGLE);       // single-shot mode
-  ads.setRate(eRATE_475);          // 475 SPS
+  ads.setMode(eMODE_CONTIN);       // continuous mode for less noise
+  ads.setRate(eRATE_8);          // 8 SPS for less noise
   ads.setOSMode(eOSMODE_SINGLE);   // Set to start a single-conversion
   ads.init();
 }
@@ -114,9 +114,9 @@ void loop(void) {
     SaveData();
     counter += 1;
     ChangeParameter("counter", String(counter)); // Used to remember what count is next
-    if (counter % 4000 == 0) {
-      gsmConnect();
-    }
+    //if (counter % 4000 == 0) {
+     // gsmConnect();
+    //}
   }
 
 }
@@ -140,7 +140,7 @@ void gsmConnect() {
   // If your SIM has PIN, pass it as a parameter of begin() in quotes
   while (notConnected)
   {
-    if (gsmAccess.begin() == GSM_READY && gprs.attachGPRS(GPRS_APN, GPRS_LOGIN, GPRS_PASSWORD) == GPRS_READY)) {
+    if (gsmAccess.begin() == GSM_READY && gprs.attachGPRS(GPRS_APN, GPRS_LOGIN, GPRS_PASSWORD) == GPRS_READY) {
       notConnected = false;
       Serial.println("Connected to network");
       timeClient.update();
@@ -148,7 +148,7 @@ void gsmConnect() {
     else
     {
       Serial.println("Not connected");
-      delay(500);
+      delay(1000);
     }
   }
 }
