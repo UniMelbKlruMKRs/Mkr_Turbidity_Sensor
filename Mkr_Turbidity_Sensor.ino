@@ -45,9 +45,8 @@ int16_t adc0, adc1, adc2, adc3;
 void setup(void)
 {
   Serial.begin(9600);
-  watchDog.setup(WDT_HARDCYCLE16S);
-  timeClient.begin();
   gsmConnect(); //Enable once sim is registered
+  watchDog.setup(WDT_HARDCYCLE16S);
   isCardMounted();
   counter = readFile("counter").toInt();
   rtc.begin();
@@ -55,17 +54,19 @@ void setup(void)
   sensorInAmbient.begin();
   ads.setAddr_ADS1115(ADS1115_IIC_ADDRESS0);   // 0x48
   ads.setGain(eGAIN_TWOTHIRDS);   // 2/3x gain
-  ads.setMode(eMODE_CONTIN);       // continuous mode for less noise
-  ads.setRate(eRATE_8);          // 8 SPS for less noise
+  ads.setMode(eMODE_SINGLE);       
+  ads.setRate(eRATE_860);          // 860 SPS for less noise
   ads.setOSMode(eOSMODE_SINGLE);   // Set to start a single-conversion
   ads.init();
+  timeClient.begin();
+  timeClient.update();
+  epochTime = timeClient.getEpochTime() + 36000;
+  rtc.setEpoch(epochTime);
 }
 
 
 void loop(void) {
   watchDog.clear();
-  epochTime = timeClient.getEpochTime() + 36000;
-  rtc.setEpoch(epochTime);
   getRtcTime();
   sensorInWater.requestTemperatures();
   sensorInAmbient.requestTemperatures();
@@ -114,6 +115,7 @@ void loop(void) {
     SaveData();
     counter += 1;
     ChangeParameter("counter", String(counter)); // Used to remember what count is next
+    delay(1000);
     //if (counter % 4000 == 0) {
      // gsmConnect();
     //}
@@ -135,20 +137,19 @@ void isCardMounted() {
 void gsmConnect() {
   // connection state
   boolean notConnected = true;
-
+  Serial.println("Trying to connect");
   // Start GSM shield
   // If your SIM has PIN, pass it as a parameter of begin() in quotes
   while (notConnected)
   {
-    if (gsmAccess.begin() == GSM_READY && gprs.attachGPRS(GPRS_APN, GPRS_LOGIN, GPRS_PASSWORD) == GPRS_READY) {
+    if ((gsmAccess.begin() == GSM_READY) && (gprs.attachGPRS(GPRS_APN, GPRS_LOGIN, GPRS_PASSWORD) == GPRS_READY)) {
       notConnected = false;
       Serial.println("Connected to network");
-      timeClient.update();
     }
     else
     {
       Serial.println("Not connected");
-      delay(1000);
+      delay(500);
     }
   }
 }
