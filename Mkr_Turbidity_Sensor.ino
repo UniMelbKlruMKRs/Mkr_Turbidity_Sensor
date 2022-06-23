@@ -171,7 +171,7 @@ void SaveData() { //save all data on the SD card
 }
 
 void getRtcTime() {
-  dateAndTime = print2digits(rtc.getDay()) + "/" + print2digits(rtc.getMonth()) + "/" + print2digits(rtc.getYear()) + " " + print2digits(rtc.getHours()) + ":" + print2digits(rtc.getMinutes()) + ":" + print2digits(rtc.getSeconds());
+//  dateAndTime = print2digits(rtc.getDay()) + "/" + print2digits(rtc.getMonth()) + "/" + print2digits(rtc.getYear()) + " " + print2digits(rtc.getHours()) + ":" + print2digits(rtc.getMinutes()) + ":" + print2digits(rtc.getSeconds());
 }
 
 String print2digits(int number) { //print correctly dates
