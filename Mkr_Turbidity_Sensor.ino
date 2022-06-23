@@ -1,4 +1,3 @@
-
 #include <Wire.h>
 #include <DFRobot_ADS1115.h>
 #include <RTCZero.h>            //Managing Real Time Clock of the MKR and sleepmode
@@ -8,7 +7,6 @@
 #include <SD.h>                 //to manage files on SD Card
 #include <WDTZero.h>            //Watch! The dog will bite you if you sleep too much!!! https://github.com/javos65/WDTZero
 #include <NTPClient.h>
-
 
 #define WATER_TEMP_SENSOR 1
 #define AMBIENT_TEMP_SENSOR 0
@@ -37,19 +35,19 @@ DallasTemperature sensorInAmbient(&oneWireAmbient);
 
 DFRobot_ADS1115 ads(&Wire);
 
-unsigned long epochTime;
-String dateAndTime;
+// unsigned long epochTime;
+// String dateAndTime;
 unsigned long counter;
 float aTemp, wTemp;
 int16_t adc0, adc1, adc2, adc3;
 void setup(void)
 {
   Serial.begin(9600);
-  gsmConnect(); //Enable once sim is registered
+  // gsmConnect(); //Enable once sim is registered
   watchDog.setup(WDT_HARDCYCLE16S);
   isCardMounted();
   counter = readFile("counter").toInt();
-  rtc.begin();
+  // rtc.begin();
   sensorInWater.begin();
   sensorInAmbient.begin();
   ads.setAddr_ADS1115(ADS1115_IIC_ADDRESS0);   // 0x48
@@ -58,16 +56,16 @@ void setup(void)
   ads.setRate(eRATE_860);          // 860 SPS for less noise
   ads.setOSMode(eOSMODE_SINGLE);   // Set to start a single-conversion
   ads.init();
-  timeClient.begin();
-  timeClient.update();
-  epochTime = timeClient.getEpochTime() + 36000;
-  rtc.setEpoch(epochTime);
+  // timeClient.begin();
+  // timeClient.update();
+  // epochTime = timeClient.getEpochTime() + 36000;
+  // rtc.setEpoch(epochTime);
 }
 
 
 void loop(void) {
   watchDog.clear();
-  getRtcTime();
+  // getRtcTime();
   sensorInWater.requestTemperatures();
   sensorInAmbient.requestTemperatures();
   aTemp = sensorInAmbient.getTempCByIndex(0);
@@ -120,8 +118,8 @@ void loop(void) {
      // gsmConnect();
     //}
   }
-
 }
+
 void isCardMounted() {
   if (SD.begin(SD_CHIP_SELECT)) {
     return;
@@ -156,11 +154,16 @@ void gsmConnect() {
 
 void SaveData() { //save all data on the SD card
   String csvObject = "";
+//  if (!SD.exists(LOG_FILE)) {
+//    csvObject = "DateTime [DDMMYY HH:MM:SS],Timestamp[s],Measure_number[-],Ambient_temp[c],Water_temp[c],Sensor0_voltage[mV],Sensor1_voltage[mV],Sensor2_voltage[mV],Sensor3_voltage[mV],\n";
+//  }
+//  myFile = SD.open(LOG_FILE, FILE_WRITE);
+//  csvObject = csvObject + dateAndTime + "," + String(epochTime) + "," + String(counter) + "," + String(aTemp) + "," + String(wTemp) + "," + String(adc0) + "," + String(adc1) + "," + String(adc2) + "," + String(adc3);
   if (!SD.exists(LOG_FILE)) {
-    csvObject = "DateTime [DDMMYY HH:MM:SS],Timestamp[s],Measure_number[-],Ambient_temp[c],Water_temp[c],Sensor0_voltage[mV],Sensor1_voltage[mV],Sensor2_voltage[mV],Sensor3_voltage[mV],\n";
+    csvObject = "Measure_number[-],Ambient_temp[c],Water_temp[c],Sensor0_voltage[mV],Sensor1_voltage[mV],Sensor2_voltage[mV],Sensor3_voltage[mV],\n";
   }
   myFile = SD.open(LOG_FILE, FILE_WRITE);
-  csvObject = csvObject + dateAndTime + "," + String(epochTime) + "," + String(counter) + "," + String(aTemp) + "," + String(wTemp) + "," + String(adc0) + "," + String(adc1) + "," + String(adc2) + "," + String(adc3);
+  csvObject = csvObject + String(counter) + "," + String(aTemp) + "," + String(wTemp) + "," + String(adc0) + "," + String(adc1) + "," + String(adc2) + "," + String(adc3);
   if (myFile) {
     myFile.println(csvObject);
     myFile.close();
